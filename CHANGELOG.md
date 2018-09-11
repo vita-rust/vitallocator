@@ -7,4 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/vita-rust/vitallocator/compare/886b278...HEAD
+## [v0.1.0] - 2018-09-11
+
+Initial release
+
+
+[Unreleased]: https://github.com/vita-rust/vitallocator/compare/v0.1.0...HEAD
+[v0.1.0]: https://github.com/vita-rust/vitallocator/compare/886b278...v0.1.0
