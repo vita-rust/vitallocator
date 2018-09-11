@@ -5,8 +5,8 @@
 [![TravisCI](https://img.shields.io/travis/vita-rust/vitallocator/master.svg?maxAge=600&style=flat-square)](https://travis-ci.org/vita-rust/vitallocator/builds)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=86400&style=flat-square)](https://github.com/vita-rust/vitallocator)
 [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=86400&style=flat-square)](http://keepachangelog.com/)
-<!-- [![Crate](https://img.shields.io/crates/v/vitallocator.svg?maxAge=86400&style=flat-square)](https://crates.io/crates/vitallocator) -->
-<!-- [![Documentation](https://img.shields.io/badge/docs-latest-4d76ae.svg?maxAge=86400&style=flat-square)](https://docs.rs/vitallocator) -->
+[![Crate](https://img.shields.io/crates/v/vitallocator.svg?maxAge=86400&style=flat-square)](https://crates.io/crates/vitallocator)
+[![Documentation](https://img.shields.io/badge/docs-latest-4d76ae.svg?maxAge=86400&style=flat-square)](https://docs.rs/vitallocator)
 [![CargoMake](https://img.shields.io/badge/built%20with-cargo--make-yellow.svg?maxAge=86400&style=flat-square)](https://sagiegurari.github.io/cargo-make)
 
 
