@@ -12,7 +12,7 @@
 
 ## Usage
 
-This crate depends on [`psp2-sys`](https://github.com/vita-rust/psp2-sys),
+This crate depends on [`psp2-sys`](https://crates.io/crates/psp2-sys),
 so you'll need the [`vitasdk`](https://vitasdk.org) set up and the
 `$VITASDK` environment variable set.
 
