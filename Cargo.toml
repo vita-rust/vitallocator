@@ -1,6 +1,6 @@
 [package]
 name = "vitallocator"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Martin Larralde <martin.larralde@ens-cachan.fr>"]
 license = "MIT"
 description = "A Rust allocator interface to the PS Vita kernel allocator"
