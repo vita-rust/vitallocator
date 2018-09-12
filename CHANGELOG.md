@@ -6,10 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
+### Fixed
+- `docs.rs` documentation compilation using the `psp2-sys/dox` feature to prevent
+  failure on missing `vitasdk` library stubs.
+
 
 ## [v0.1.0] - 2018-09-11
-
-Initial release
+### Added
+- The `Vitallocator` struct with [`Alloc`](https://doc.rust-lang.org/nightly/core/alloc/trait.Alloc.html)
+  implementation.
 
 
 [Unreleased]: https://github.com/vita-rust/vitallocator/compare/v0.1.0...HEAD
