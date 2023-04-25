@@ -89,7 +89,7 @@ unsafe impl Allocator for Vitallocator {
         // Allocate the memory block
         let uid: SceUID = unsafe {
             sceKernelAllocMemBlock(
-                (&name).as_ptr(),
+                name.as_ptr(),
                 SCE_KERNEL_MEMBLOCK_TYPE_USER_RW,
                 size as i32,
                 &mut options as *mut _,
