@@ -7,16 +7,15 @@
 
 #![no_std]
 #![feature(allocator_api)]
-#![feature(const_fn)]
 
 extern crate psp2_sys;
 
 mod utils;
 
-use core::alloc::Alloc;
-use core::alloc::AllocErr;
+use core::alloc::AllocError;
+use core::alloc::Allocator;
 use core::alloc::Layout;
-use core::cell::UnsafeCell;
+use core::cell::Cell;
 use core::cmp::max;
 use core::mem::size_of;
 use core::ptr::NonNull;
@@ -30,11 +29,6 @@ use psp2_sys::kernel::sysmem::SceKernelAllocMemBlockOpt;
 use psp2_sys::kernel::sysmem::SceKernelMemBlockInfo;
 use psp2_sys::kernel::sysmem::SceKernelMemBlockType::SCE_KERNEL_MEMBLOCK_TYPE_USER_RW;
 use psp2_sys::kernel::sysmem::SceKernelMemoryAccessType::SCE_KERNEL_MEMORY_ACCESS_R;
-use psp2_sys::kernel::sysmem::SceKernelMemoryAccessType::SCE_KERNEL_MEMORY_ACCESS_W;
-use psp2_sys::kernel::sysmem::SceKernelMemoryAccessType::SCE_KERNEL_MEMORY_ACCESS_X;
-use psp2_sys::kernel::threadmgr::sceKernelCreateMutex;
-use psp2_sys::kernel::threadmgr::sceKernelLockMutex;
-use psp2_sys::kernel::threadmgr::sceKernelUnlockMutex;
 use psp2_sys::types::SceUID;
 use psp2_sys::void;
 
@@ -54,7 +48,7 @@ use psp2_sys::void;
 /// [`Layout`]: https://doc.rust-lang.org/nightly/core/alloc/struct.Layout.html
 /// [`Mutex`]: struct.Mutex.html
 pub struct Vitallocator {
-    block_count: usize,
+    block_count: Cell<usize>,
 }
 
 impl Default for Vitallocator {
@@ -66,12 +60,12 @@ impl Default for Vitallocator {
 impl Vitallocator {
     /// Create a new kernel allocator.
     pub const fn new() -> Self {
-        Vitallocator { block_count: 0 }
+        Vitallocator { block_count: Cell::new(0) }
     }
 }
 
-unsafe impl Alloc for Vitallocator {
-    unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
+unsafe impl Allocator for Vitallocator {
+    fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
         // Prepare the options to pass to SceKernelAllocMemBlock
         let mut options = SceKernelAllocMemBlockOpt {
             size: size_of::<SceKernelAllocMemBlockOpt>() as u32,
@@ -88,36 +82,44 @@ unsafe impl Alloc for Vitallocator {
 
         // Define a new name for the block (writing the block count as hex)
         let mut name: [u8; 18] = *b"__rust_0x00000000\0";
-        utils::write_hex(self.block_count, &mut name[9..16]);
+        utils::write_hex(self.block_count.get(), &mut name[9..16]);
+
+        let size = max(layout.size(), 4096);
 
         // Allocate the memory block
-        let uid: SceUID = sceKernelAllocMemBlock(
-            (&name).as_ptr(),
-            SCE_KERNEL_MEMBLOCK_TYPE_USER_RW,
-            max(layout.size() as i32, 4096),
-            &mut options as *mut _,
-        );
+        let uid: SceUID = unsafe {
+            sceKernelAllocMemBlock(
+                (&name).as_ptr(),
+                SCE_KERNEL_MEMBLOCK_TYPE_USER_RW,
+                size as i32,
+                &mut options as *mut _,
+            )
+        };
         if uid < 0 {
-            return Err(AllocErr);
+            return Err(AllocError);
         }
 
         // Imcrease the block count: to the kernel, we allocated a new block.
         // `wrapping_add` avoids a panic when the total number of allocated blocks
         // exceeds `usize::max_value()`. An undefined behaviour is still expected
         // from the kerne since some block could possibly be named the same.
-        self.block_count = self.block_count.wrapping_add(1);
+        self.block_count.set(self.block_count.get().wrapping_add(1));
 
         // Get the adress of the allocated location
-        if sceKernelGetMemBlockBase(uid, &mut basep as *mut *mut void) < 0 {
-            sceKernelFreeMemBlock(uid); // avoid memory leak if the block cannot be used
-            return Err(AllocErr);
+        unsafe {
+            if sceKernelGetMemBlockBase(uid, &mut basep as *mut *mut void) < 0 {
+                sceKernelFreeMemBlock(uid); // avoid memory leak if the block cannot be used
+                return Err(AllocError);
+            }
         }
-
         // Return the obtained non-null, opaque pointer
-        NonNull::new(basep as *mut _).ok_or(AllocErr)
+        let slice = unsafe {
+            core::slice::from_raw_parts_mut(basep as *mut u8, size)
+        };
+        NonNull::new(slice as *mut _).ok_or(AllocError)
     }
 
-    unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
+    unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
         // Get the size of the pointer memory block
         let mut info: SceKernelMemBlockInfo = ::core::mem::uninitialized();
         sceKernelGetMemBlockInfoByAddr(ptr.as_ptr() as *mut void, (&mut info) as *mut _);
