@@ -119,10 +119,11 @@ unsafe impl Allocator for Vitallocator {
         NonNull::new(slice as *mut _).ok_or(AllocError)
     }
 
-    unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
+    unsafe fn deallocate(&self, ptr: NonNull<u8>, _layout: Layout) {
         // Get the size of the pointer memory block
-        let mut info: SceKernelMemBlockInfo = ::core::mem::uninitialized();
-        sceKernelGetMemBlockInfoByAddr(ptr.as_ptr() as *mut void, (&mut info) as *mut _);
+        let mut info = core::mem::MaybeUninit::<SceKernelMemBlockInfo>::uninit();
+        sceKernelGetMemBlockInfoByAddr(ptr.as_ptr() as *mut void, info.as_mut_ptr() as *mut _);
+        let info = info.assume_init();
 
         // Find the SceUID
         let uid = sceKernelFindMemBlockByAddr(ptr.as_ptr() as *mut void, info.size);
